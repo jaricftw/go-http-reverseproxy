@@ -1,0 +1,33 @@
+hash: 9924ce93733e97e8325998561df4be48d219f2692842b0bcdd260518f048eafd
+updated: 2019-08-03T21:55:52.234244692-07:00
+imports:
+- name: golang.org/x/net
+  version: ca1201d0de80cfde86cb01aea620983605dfe99b
+  subpackages:
+  - context
+  - http/httpguts
+  - http2
+  - http2/h2c
+  - http2/hpack
+  - idna
+testImports:
+- name: github.com/davecgh/go-spew
+  version: d8f796af33cc11cb798c1aaeb27a4ebc5099927d
+  subpackages:
+  - spew
+- name: github.com/pmezard/go-difflib
+  version: 5d4384ee4fb2527b0a1256a821ebfc92f91efefc
+  subpackages:
+  - difflib
+- name: github.com/stretchr/testify
+  version: ffdc059bfe9ce6a4e144ba849dbedead332c6053
+  subpackages:
+  - assert
+  - require
+- name: golang.org/x/text
+  version: fe223c5a2583471b2791ca99e716c65b4a76117e
+  subpackages:
+  - secure/bidirule
+  - transform
+  - unicode/bidi
+  - unicode/norm
