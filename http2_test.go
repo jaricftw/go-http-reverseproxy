@@ -102,7 +102,7 @@ func startHTTP2ReverseProxy(t *testing.T) *http.Server {
 	require.NoError(t, err)
 
 	proxyServer := &http.Server{
-		Handler: proxy,
+		Handler: h2c.NewHandler(proxy, &http2.Server{}),
 	}
 
 	go proxyServer.Serve(ln)
