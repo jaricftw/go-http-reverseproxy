@@ -23,51 +23,78 @@ const (
 )
 
 func TestHTTP2(t *testing.T) {
-	server := startHTTP2Server(t)
-	defer server.Close()
-	proxyServer := startHTTP2ReverseProxy(t)
-	defer proxyServer.Close()
-
-	client := &http.Client{
-		Timeout: time.Second,
-		Transport: &http2.Transport{
-			AllowHTTP: true,
-			DialTLS: func(netw, addr string, cfg *tls.Config) (net.Conn, error) {
-				return net.Dial(netw, addr)
-			},
-		},
-	}
-	defer client.CloseIdleConnections()
 
 	tests := []struct {
-		msg  string
-		port int
+		msg                string
+		port               int
+		abortServerHandler bool
+		wantErr            string
 	}{
 		{
-			"direct",
-			http2Port,
+			msg:  "direct, success",
+			port: http2Port,
 		},
 		{
-			"via proxy",
-			proxyPort,
+			msg:  "via proxy, success",
+			port: proxyPort,
+		},
+		{
+			msg:                "direct, server panic",
+			port:               http2Port,
+			abortServerHandler: true,
+			wantErr:            "stream error",
+		},
+		{
+			msg:                "via proxy, server panic",
+			port:               proxyPort,
+			abortServerHandler: true,
+			wantErr:            "stream error",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.msg, func(t *testing.T) {
+			client := &http.Client{
+				Timeout: time.Second,
+				Transport: &http2.Transport{
+					AllowHTTP: true,
+					DialTLS: func(netw, addr string, cfg *tls.Config) (net.Conn, error) {
+						return net.Dial(netw, addr)
+					},
+				},
+			}
+			defer client.CloseIdleConnections()
+
+			proxyServer := startHTTP2ReverseProxy(t)
+			defer proxyServer.Close()
+
+			server := startHTTP2Server(t, tt.abortServerHandler)
+			defer server.Close()
+
 			req, err := http.NewRequest("GET", fmt.Sprintf("http://127.0.0.1:%d", tt.port), nil)
 			require.NoError(t, err)
 
 			resp, err := client.Do(req)
+			t.Logf("got err: %v", err)
+			t.Logf("got resp: %v", resp)
+			if tt.wantErr != "" {
+				require.Error(t, err)
+				assert.Contains(t, err.Error(), tt.wantErr)
+				return
+			}
 			require.NoError(t, err)
 			assert.Contains(t, getResponseBody(t, resp), "hello world HTTP/2.0")
+			defer resp.Body.Close()
 		})
 	}
 }
 
-func startHTTP2Server(t *testing.T) *http.Server {
+func startHTTP2Server(t *testing.T, abortHandler bool) *http.Server {
 	h1Handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintln(w, "hello world "+r.Proto)
+		if abortHandler {
+			panic(http.ErrAbortHandler)
+		}
 	})
 
 	ln, err := net.Listen("tcp", fmt.Sprintf(":%d", http2Port))
