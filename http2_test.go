@@ -18,8 +18,8 @@ import (
 )
 
 const (
-	http2Port = 7777
-	proxyPort = 17777
+	http2Port      = 7777
+	http2ProxyPort = 17777
 )
 
 func TestHTTP2(t *testing.T) {
@@ -36,7 +36,7 @@ func TestHTTP2(t *testing.T) {
 		},
 		{
 			msg:  "via proxy, success",
-			port: proxyPort,
+			port: http2ProxyPort,
 		},
 		{
 			msg:                "direct, server panic",
@@ -46,7 +46,7 @@ func TestHTTP2(t *testing.T) {
 		},
 		{
 			msg:                "via proxy, server panic",
-			port:               proxyPort,
+			port:               http2ProxyPort,
 			abortServerHandler: true,
 			wantErr:            "stream error",
 		},
@@ -125,7 +125,7 @@ func startHTTP2ReverseProxy(t *testing.T) *http.Server {
 		},
 	}
 
-	ln, err := net.Listen("tcp", fmt.Sprintf(":%d", proxyPort))
+	ln, err := net.Listen("tcp", fmt.Sprintf(":%d", http2ProxyPort))
 	require.NoError(t, err)
 
 	proxyServer := &http.Server{
