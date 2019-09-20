@@ -1,1 +1,1 @@
-# go-http2-reverseproxy
+# go-http-reverseproxy tests
